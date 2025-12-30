@@ -364,7 +364,7 @@ def admin_delete_receptionist():
 
         receptionist_id = input(
             "Enter the receptionist's TP that you want to remove: ").strip()
-        with open(file_path_coaches, 'r') as f:
+        with open(file_path_receptionist, 'r') as f:
             lines = f.readlines()
 
             if not lines:
