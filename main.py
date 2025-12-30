@@ -134,13 +134,13 @@ def admin():
             register_acc(file_path_coaches)
 
         elif user_input == "2":  # Delete Coaches
-            admin_delete_coaches()
+            delete_acc(file_path_coaches)
 
         elif user_input == "3":  # Register Receptionist
             register_acc(file_path_receptionist)
 
         elif user_input == "4":  # Delete receptionist
-            admin_delete_receptionist()
+            delete_acc(file_path_receptionist)
 
         elif user_input == "5":  # View Montly Income
             view_montly_income()
@@ -164,76 +164,6 @@ def admin():
         else:
             clear_screen()
             print("Invalid number..Please try again....\n\n")
-
-
-def admin_delete_coaches():
-
-    while True:
-        coaches_id = input(
-            "Enter the coach's TP that you want to remove: TP ").strip()
-        with open(file_path_coaches, 'r') as f:
-            lines = f.readlines()
-
-            if not lines:
-                print("No coaches found....")
-                admin_register = input(
-                    "Do you want to register coaches right now(y/n)").lower().strip()
-                if admin_register == "y":
-                    admin_register_coaches()
-                    return
-
-                elif admin_register == "n":
-                    admin()
-
-                else:
-                    print("Invalid Answer, please try again")
-            else:
-                with open(file_path_coaches, 'w') as f:
-                    for line in lines:
-                        data = line.strip().split(" | ")
-
-                        if data[3] == coaches_id:
-                            f.write(line)
-
-                clear_screen()
-                print("=" * 50)
-                print(f"Coaches TP {coaches_id} has been deleted.")
-                return
-
-
-def admin_delete_receptionist():
-    while True:
-
-        receptionist_id = input(
-            "Enter the receptionist's TP that you want to remove: ").strip()
-        with open(file_path_receptionist, 'r') as f:
-            lines = f.readlines()
-
-            if not lines:
-                print("No receptionist found....")
-                admin_register = input(
-                    "Do you want to register receptionist right now(y/n)").lower().strip()
-                if admin_register == "y":
-                    admin_register_receptionist()
-                    return
-
-                elif admin_register == "n":
-                    admin()
-
-                else:
-                    print("Invalid Answer, please try again")
-
-            else:
-                with open(file_path_receptionist, 'w') as f:
-                    for line in lines.readlines():
-                        data = line.split(" | ")
-                        if data[3] == receptionist_id:
-                            f.write(line)
-
-                clear_screen()
-                print("=" * 50)
-                print(f"Coaches TP {receptionist_id} has been deleted.")
-                return
 
 
 def store_montly_income():
@@ -558,6 +488,42 @@ def register_acc(file_path):
     clear_screen()
     print("-" * 50)
     print("Register Successful!")
+
+
+def delete_acc(file_path):
+    acc_id = input(
+        "Enter the TP that you want to remove (e.g. TP200 or 200): ").strip()
+
+    target = coaches_id.strip()
+    if not target.upper().startswith("TP"):
+        target = "TP" + target
+
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    deleted = False
+
+    with open(file_path, "w") as f:
+        for line in lines:
+            if not line.strip():
+                continue
+
+            parts = [s.strip() for s in line.strip().split("|")]
+            if len(parts) < 2:
+                f.write(line)
+                continue
+
+            coach_tp = parts[3]
+            if coach_tp.upper() == target.upper():
+                deleted = True
+                continue   # skip writing this line
+
+            f.write(line)
+
+    if deleted:
+        print("Successful")
+    else:
+        print("Coach TP not found")
 
 
 def update_profile(file_path):
