@@ -99,7 +99,7 @@ def login_page():
                 logged_in = True
 
             if logged_in:
-                break  # exit the login_attempts loop
+                break
 
             login_attempts -= 1
             print("Invalid password or username...Please try again")
@@ -120,9 +120,9 @@ def login_page():
 
 def admin():
     # ["Register Coaches", "Delete Coaches","Register Receptionist", "Delete receptionist", "View Montly Income", "Store Money Income", "Update profile",  "Login Out", "Quit"]
-
+    clear_screen()
     while True:
-        clear_screen()
+
         print("Welcome to Admin Sport-Training Centre Management System")
 
         for i, admin_option in enumerate(admin_options, start=1):
@@ -131,13 +131,13 @@ def admin():
         user_input = input("Enter your choice (1-9): ")
 
         if user_input == "1":  # Register Coaches
-            admin_register_coaches()
+            register_acc(file_path_coaches)
 
         elif user_input == "2":  # Delete Coaches
             admin_delete_coaches()
 
         elif user_input == "3":  # Register Receptionist
-            admin_register_receptionist()
+            register_acc(file_path_receptionist)
 
         elif user_input == "4":  # Delete receptionist
             admin_delete_receptionist()
@@ -149,7 +149,7 @@ def admin():
             store_montly_income()
 
         elif user_input == "7":  # Update Profile
-            admin_profile()
+            update_profile(file_path_admin)
 
         elif user_input == "8":  # Login Out
             print("Logging Out....")
@@ -166,102 +166,7 @@ def admin():
             print("Invalid number..Please try again....\n\n")
 
 
-def admin_register_coaches():  # admin menu option 1 # done
-
-    clear_screen()
-    password_length = 8
-    min_age = 18
-    max_age = 80
-    min_contact_num = 8
-    max_contact_num = 9
-
-    while True:
-        name = input("Please enter coaches name: ")
-
-        if not name.isalpha():
-            print("Invalid name..Please make sure name is alphabet")
-            continue
-        else:
-            break
-
-    while True:
-        password = input("Enter a new password: ")
-
-        if len(password) < password_length:
-            print(f"Password must be at least {password_length} word")
-            continue
-
-        else:
-            clear_screen()
-            break
-    while True:
-        email = input("Enter trainee email: ")
-
-        if not email.lower().endswith("@gmail.com"):
-            print("Invalid Email..Please try again")
-            continue
-        else:
-            clear_screen()
-            break
-
-    coaches_id = input("Please register new trainee ID: TP ")
-
-    while True:
-        age = input("Please enter trainee age: ")
-
-        if not age.isdigit():
-            print("Age must in number")
-            continue
-
-        age = int(age)
-
-        if min_age <= age <= max_age:
-            clear_screen()
-            break
-        else:
-            print(f"Age must be between {min_age} to {max_age}")
-            continue
-
-    while True:
-        contact_number = input("Enter coach contact number: +60 ")
-        if not contact_number.isdigit():
-            print("Invalid contact number")
-            continue
-
-        if min_contact_num <= len(contact_number) <= max_contact_num:
-            clear_screen()
-            break
-        else:
-            print("Invalid phone number...please try again")
-            continue
-
-    while True:
-
-        for i, sport in enumerate(sports, start=1):
-            print(f"{i}. {sport}")
-        sport_choice = input(
-            "Please Assign sport(s) (separate with comma): : ").lower().strip()
-
-        chosen_sports = [s.strip() for s in sport_choice.split(",")]
-
-        invalid_sports = [s for s in chosen_sports if s not in sports]
-
-        if invalid_sports:
-            print("Invalid sport(s):", ", ".join(invalid_sports))
-            print("Please try again...")
-        else:
-            clear_screen()
-            break
-
-    with open(file_path_coaches, 'a') as coaches_file:
-        coaches_file.write(name + " | " + password + " | " + email + " | " +
-                           "TP" + coaches_id + " | " + str(age) + " | " + contact_number + " | " + sport_choice + "\n")
-        clear_screen()
-        print("-" * 50)
-        print("Register Successful!")
-
-
-def admin_delete_coaches():  # admin menu option 2  # problem
+def admin_delete_coaches():
 
     while True:
         coaches_id = input(
@@ -296,74 +201,6 @@ def admin_delete_coaches():  # admin menu option 2  # problem
                 return
 
 
-def admin_register_receptionist():  # admin menu option 3 # done
-
-    clear_screen()
-    password_length = 8
-    min_age = 18
-    max_age = 80
-    min_contact_num = 8
-    max_contact_num = 9
-
-    name = input("Please enter receptionist name: ")
-
-    while True:
-        password = input("Enter a new password: ")
-
-        if len(password) < password_length:
-            print(f"Password must be at least {password_length} word")
-            continue
-        else:
-            clear_screen()
-            break
-
-    while True:
-        email = input("Enter trainee email: ")
-
-        if not email.lower().endswith("@gmail.com"):
-            print("Invalid Email..Please try again")
-            continue
-        else:
-            clear_screen()
-            break
-
-    trainee_id = input("Please register new trainee ID: TP")
-    while True:
-        age = input("Please enter trainee age: ")
-
-        if not age.isdigit():
-            print("Age must in number")
-            continue
-
-        age = int(age)
-
-        if min_age <= age <= max_age:
-            clear_screen()
-            break
-        else:
-            print(f"Age must be between {min_age} to {max_age}")
-
-    while True:
-        contact_number = input("Enter coach contact number: +60 ")
-        if not contact_number.isdigit():
-            print("Invalid contact number")
-            continue
-
-        if min_contact_num <= len(contact_number) <= max_contact_num:
-            clear_screen()
-            break
-        else:
-            print("Invalid phone number...please try again")
-            continue
-
-    with open(file_path_receptionist, 'a') as coaches_file:
-        coaches_file.write(name + " | " + password + " | " + email + " | " +
-                           trainee_id + " | " + str(age) + " | " + contact_number + "\n")
-        clear_screen()
-        print("=" * 50)
-        print("Register Successful!")
-
-
 def admin_delete_receptionist():
     while True:
 
@@ -388,7 +225,7 @@ def admin_delete_receptionist():
 
             else:
                 with open(file_path_receptionist, 'w') as f:
-                    for line in lines:
+                    for line in lines.readlines():
                         data = line.split(" | ")
                         if data[3] == receptionist_id:
                             f.write(line)
@@ -438,10 +275,6 @@ def view_montly_income():
         else:
             print("Invalid choice.Please try again...")
 
-
-def admin_profile():
-    update_profile(file_path_admin)
-
 # ========  Receptionist
 
 
@@ -458,19 +291,19 @@ def receptionist():
         user_input = input("Enter your choice (1-8)")
 
         if user_input == "1":
-            register_trainee()
+            receptionist_register_trainee()
 
         elif user_input == "2":
-            update_trainning()
+            receptionist_update_trainning()
 
         elif user_input == "3":
-            payment()
+            receptionist_payment()
 
         elif user_input == "4":
-            generate_receipt()
+            receptionist_generate_receipt()
 
         elif user_input == "5":
-            request()
+            receptionist_request()
 
         elif user_input == "6":
             update_profile(file_path_receptionist)
@@ -490,8 +323,93 @@ def receptionist():
             print("Invalid number..Please try again....\n\n")
 
 
-def register_trainee():
-    print("Comming Soon")
+def receptionist_register_trainee():
+    clear_screen()
+    password_length = 8
+    min_age = 18
+    max_age = 80
+    min_contact_num = 8
+    max_contact_num = 9
+
+    while True:
+        name = input("Please enter name: ")
+
+        if not name.isalpha():
+            print("Invalid name..Please make sure name is alphabet")
+            continue
+        else:
+            break
+
+    while True:
+        password = input("Please enter a new password: ")
+
+        if len(password) < password_length:
+            print(f"Password must be at least {password_length} word")
+            continue
+
+        else:
+            break
+    while True:
+        email = input("Please enter email address: ")
+
+        if not email.lower().endswith("@gmail.com"):
+            print("Invalid Email..Please try again")
+            continue
+        else:
+            break
+
+    acc_id = input("Please register new ID: TP ")
+
+    while True:
+        age = input("Please enter age: ")
+
+        if not age.isdigit():
+            print("Age must in number")
+            continue
+
+        age = int(age)
+
+        if min_age <= age <= max_age:
+            break
+        else:
+            print(f"Age must be between {min_age} to {max_age}")
+            continue
+
+    while True:
+        contact_number = input("Please enter contact number: +60 ")
+        if not contact_number.isdigit():
+            print("Invalid contact number")
+            continue
+
+        if min_contact_num <= len(contact_number) <= max_contact_num:
+            break
+        else:
+            print("Invalid phone number...please try again")
+            continue
+
+    while True:
+
+        for i, sport in enumerate(sports, start=1):
+            print(f"{i}. {sport}")
+        sport_choice = input(
+            "Please Assign sport(s) (separate with comma): ").lower().strip()
+
+        chosen_sports = [s.strip() for s in sport_choice.split(",")]
+
+        invalid_sports = [s for s in chosen_sports if s not in sports]
+
+        if invalid_sports:
+            print("Invalid sport(s):", ", ".join(invalid_sports))
+            print("Please try again...")
+        else:
+            break
+
+    with open(file_path, 'a') as f:
+        f.write(name + " | " + password + " | " + email + " | " +
+                "TP" + acc_id + " | " + str(age) + " | " + contact_number + " | " + sport_choice + " | " + "unpaid" + "\n")
+    clear_screen()
+    print("-" * 50)
+    print("Register Successful!")
 
 
 def update_trainning():
@@ -551,6 +469,95 @@ def login_acc(file_path, username, password):  # login page
                 print("Login Successful")
                 return True
     return False
+
+
+def register_acc(file_path):
+    clear_screen()
+    password_length = 8
+    min_age = 18
+    max_age = 80
+    min_contact_num = 8
+    max_contact_num = 9
+
+    while True:
+        name = input("Please enter name: ")
+
+        if not name.isalpha():
+            print("Invalid name..Please make sure name is alphabet")
+            continue
+        else:
+            break
+
+    while True:
+        password = input("Please enter a new password: ")
+
+        if len(password) < password_length:
+            print(f"Password must be at least {password_length} word")
+            continue
+
+        else:
+            break
+    while True:
+        email = input("Please enter email address: ")
+
+        if not email.lower().endswith("@gmail.com"):
+            print("Invalid Email..Please try again")
+            continue
+        else:
+            break
+
+    acc_id = input("Please register new ID: TP ")
+
+    while True:
+        age = input("Please enter age: ")
+
+        if not age.isdigit():
+            print("Age must in number")
+            continue
+
+        age = int(age)
+
+        if min_age <= age <= max_age:
+            break
+        else:
+            print(f"Age must be between {min_age} to {max_age}")
+            continue
+
+    while True:
+        contact_number = input("Please enter contact number: +60 ")
+        if not contact_number.isdigit():
+            print("Invalid contact number")
+            continue
+
+        if min_contact_num <= len(contact_number) <= max_contact_num:
+            break
+        else:
+            print("Invalid phone number...please try again")
+            continue
+
+    while True:
+
+        for i, sport in enumerate(sports, start=1):
+            print(f"{i}. {sport}")
+        sport_choice = input(
+            "Please Assign sport(s) (separate with comma): ").lower().strip()
+
+        chosen_sports = [s.strip() for s in sport_choice.split(",")]
+
+        invalid_sports = [s for s in chosen_sports if s not in sports]
+
+        if invalid_sports:
+            print("Invalid sport(s):", ", ".join(invalid_sports))
+            print("Please try again...")
+        else:
+            break
+
+    with open(file_path, 'a') as f:
+        f.write(name + " | " + password + " | " + email + " | " +
+                "TP" + acc_id + " | " + str(age) + " | " + contact_number + " | " + sport_choice + "\n")
+    clear_screen()
+    print("-" * 50)
+    print("Register Successful!")
 
 
 def update_profile(file_path):
