@@ -240,10 +240,15 @@ def admin_register_coaches():  # admin menu option 1 # done
         for i, sport in enumerate(sports, start=1):
             print(f"{i}. {sport}")
         sport_choice = input(
-            "Please assign the correct sport name to the coaches to respective Sport-Training (can choose more than one): ").lower().strip()
+            "Please Assign sport(s) (separate with comma): : ").lower().strip()
 
-        if sport_choice not in sports:
-            print("Invalid sport...Please try again...")
+        chosen_sports = [s.strip() for s in sport_choice.split(",")]
+
+        invalid_sports = [s for s in chosen_sports if s not in sports]
+
+        if invalid_sports:
+            print("Invalid sport(s):", ", ".join(invalid_sports))
+            print("Please try again...")
         else:
             clear_screen()
             break
