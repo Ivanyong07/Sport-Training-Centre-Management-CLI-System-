@@ -28,8 +28,8 @@ receptionist_options = ["Regiter Trainee",
                         "Update Trainning", "Payment", "Generate Receipt", "Request", "Update Profile", "Login Out", "Quit"]
 
 # Coach page - mun chong
-coach_options = ["Add Training Programs", "Update Training Program",
-                 "Delete Training Program", "View the list of trainees", "Update Profile", "Login Out", "Quit"]
+coaches_options = ["Add Training Programs", "Update Training Program",
+                   "Delete Training Program", "View the list of trainees", "Update Profile", "Login Out", "Quit"]
 
 # Trainee page - lewen
 trainee_options = ["View schedule", "Change Training program",
@@ -123,7 +123,7 @@ def admin():
     clear_screen()
     while True:
 
-        print("Welcome to Admin Sport-Training Centre Management System")
+        print("\n---Welcome to Admin Sport-Training Centre Management System---")
 
         for i, admin_option in enumerate(admin_options, start=1):
             print(f"[{i}]. {admin_option}")
@@ -357,11 +357,181 @@ def generate_receipt():
 def request():
     print("Comming Soon")
 
+
 # ========  Coach
+File = "coach_program.txt"
 
 
 def coach():
-    print("Coach menu....")
+    # ["Add Training Programs", "Update Training Program", "Delete Training Program", "View the list of trainees", "Update Profile", "Login Out", "Quit"]
+    while True:
+        print("\n---Welcome to Coach Sport-Training Centre Management System---")
+        for i, coaches_option in enumerate(coaches_options, start=1):
+            print(f"[{i}]. {admin_option}")
+
+        choice = input("Choice: ")
+
+        if choice == "1":
+            add_program()
+
+        elif choice == "2":
+            update_program()
+
+        elif choice == "3":
+            delete_program()
+
+        elif choice == "4":
+            view_program()
+
+        elif choice == "5":
+            update_profile(file_path_coaches)
+
+        elif user_input == "6":  # Login Out
+            print("Logging Out....")
+            clear_logout()
+            return
+
+        elif choice == "7":
+            clear_screen()  # Quit
+            print(
+                "Thank you for using Admin Sport-Training Centre Management System..Good Bye!")
+            exit()
+        else:
+            clear_screen()
+            print("Invalid Answer, please try again")
+
+# adding program coach
+
+
+def add_program():
+    coach_program = "coach_program.txt"
+
+    while True:
+
+        name = input("Program Name: ")
+        if not name.isalpha():
+            print("Invalid name..Please make sure name is alphabet")
+            continue
+        else:
+            break
+        break
+
+    while True:
+
+        charge = input("Charge: RM")
+        if not charge.isdecimal():
+            print("Invalid charges..Please make sure it is a number")
+            continue
+        else:
+            break
+        break
+
+    while True:
+
+        date = input("Date (DD/MM/YYYY): ")
+
+        try:
+            datetime.strptime(date, "%d/%m/%Y")
+            print("date saved")
+            break
+        except ValueError:
+            print("Invalid date. Please use DD/MM/YYYY")
+
+    while True:
+        time = input("Time (2400 format): ")
+        if time.isdigit() and len(time) == 4:
+            h = int(time[:2])
+            m = int(time[2:])
+            if 0 <= h <= 23 and 0 <= m <= 59:
+                break
+        print("Invalid time, please rewrite it in form of 2400.")
+
+    while True:
+
+        record = name + "|" + charge + "|" + date + "|" + time + "\n"
+
+        with open(coach_program, "a") as file:
+            file.write(record)
+
+            print("Program added successfully.")
+        return
+
+
+# update program
+def update_program():
+    if not os.path.exists(File):
+        print("No file found.")
+        return
+
+    target = input("Enter program name to update: ")
+    updated = False
+    new_lines = []
+
+    with open(File, "r") as f:
+        for line in f:
+            name, charge, date, time = line.strip().split("|")
+            if name.lower() == target.lower():
+                print("Program found. Enter new details.")
+
+                new_charge = input("New charge: RM ")
+                new_date = input("New date (DD/MM/YYYY): ")
+                new_time = input("New time (2400): ")
+
+                new_lines.append(
+                    f"{name}|{new_charge}|{new_date}|{new_time}\n")
+                updated = True
+            else:
+                new_lines.append(line)
+
+    with open(File, "w") as f:
+        f.writelines(new_lines)
+
+    if updated:
+        print("Program updated successfully.")
+    else:
+        print("Program not found.")
+
+
+# delete program
+def delete_program():
+    if not os.path.exists(File):
+        print("No file found.")
+        return
+
+    target = input("Enter program name to delete: ")
+    deleted = False
+    new_lines = []
+
+    with open(File, "r") as f:
+        for line in f:
+            name = line.split("|")[0]
+            if name.lower() == target.lower():
+                deleted = True
+            else:
+                new_lines.append(line)
+
+    with open(File, "w") as f:
+        f.writelines(new_lines)
+
+    if deleted:
+        print("Program deleted successfully.")
+    else:
+        print("Program not found.")
+
+# view program
+
+
+def view_program():
+    if not os.path.exists(File):
+        print("No programs found.")
+        return
+
+    with open(File, "r") as f:
+        print("\n--- PROGRAM LIST ---")
+        for line in f:
+            name, charge, date, time = line.strip().split("|")
+            print(
+                f"Programe name: {name}, RM{charge}, Date: {date}, Time: {time}")
 
 # ========  Trainee
 
@@ -536,7 +706,6 @@ def update_profile(file_path):
 
     # update_profile_options = ["Change Username", "Change Password", "Change Email", "Change Age" "Change Contact Number", "Quit"]
     while True:
-
         clear_screen()
 
         for i, update_profile_option in enumerate(update_profile_options, start=1):
