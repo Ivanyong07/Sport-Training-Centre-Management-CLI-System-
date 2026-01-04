@@ -114,8 +114,9 @@ def login_acc(file_path, username, password):  # login page
             if username == data[0] and password == data[1]:
                 clear_screen()
                 print("Login Successful")
-                return True
-    return False
+                login_acc_id = data[3]
+                return login_acc_id
+    return None
 
 
 def register_acc(file_path, role=""):
@@ -133,7 +134,7 @@ def register_acc(file_path, role=""):
                         10000000, 999999999)
     sport = input_sport()
     with open(file_path, 'a') as f:
-        line = f"{name} | {password} | {email} | {acc_id} | {str(age)} | {contact}\n"
+        line = f"{name} | {password} | {email} | {acc_id} | {str(age)} | {contact} | {sport}\n"
         f.write(line)
     print(f"---{role} Register Successful!---")
 
@@ -173,7 +174,7 @@ def delete_acc(file_path):
         print("Coach TP not found")
 
 
-def update_profile(file_path):
+def update_profile(file_path, id_value):
     # update_profile_options = ["Change Username", "Change Password", "Change Email", "Change Age" "Change Contact Number", "Quit"]
     while True:
         clear_screen()
@@ -182,91 +183,51 @@ def update_profile(file_path):
             print(f"{i}. {update_profile_option}")
         user_input = input("Enter choice: ")
 
-        if user_input == "1":
-            new_name = input_alpha("Enter new username: ").strip()
-
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-
-            with open(file_path, 'w') as f:
-                for line in lines:
-                    data = line.strip().split(" | ")
-                    data[0] = new_name
-                    f.write(" | ".join(data) + "\n")
-            print(f"Successfully changed username to {new_name}")
-
-        elif user_input == "2":  # new password
-            while True:
-                new_password = input("Enter your new password: ").strip()
-
-                if len(new_password) < password_length:
-                    print(f"Password must be at least {password_length} word")
-                    continue
-
-                else:
-                    clear_screen()
-                    break
-
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-
-            with open(file_path, 'w') as f:
-                for line in lines:
-                    data = line.strip().split(" | ")
-                    data[1] = new_password
-                    f.write(" | ".join(data) + "\n")
-
-            print(f"Successfully changed password to {new_password}")
-
-        elif user_input == "3":  # new email
-            new_email = input_email(
-                "Enter your new password: ").strip()
-
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-
-            with open(file_path, 'w') as f:
-                for line in lines:
-                    data = line.strip().split(" | ")
-                    data[2] = new_email
-                    f.write(" | ".join(data) + "\n")
-
-            print(f"Successfully changed email to {new_email}")
-
-        elif user_input == "4":  # new age
-            new_age = input_age("Enter your new age: ", 18, 50).strip()
-
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-
-            with open(file_path, 'w') as f:
-                for line in lines:
-                    data = line.strip().split(" | ")
-                    data[4] = str(age)
-                    f.write(" | ".join(data) + "\n")
-
-            print(f"Successfully changed age to {age}")
-
-        elif user_input == "5":  # new contact number
-            new_contact = input_int(
-                "Enter coach contact number: +60 ").strip9
-
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-
-            with open(file_path, 'w') as f:
-                for line in lines:
-                    data = line.strip().split(" | ")
-                    data[0] = new_contact_number
-                    f.write(" | ".join(data) + "\n")
-
-            print(
-                f"Successfully changed contact number to {new_contact_number}")
-
-        elif user_input == "6":
-            clear_screen()
+        if user_input == "6":
             return
-        print("Invalid number.Please try again...")
+
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+
+        with open(file_path, 'w') as f:
+            for line in lines:
+                data = line.strip().split(" | ")
+                if data[3] == id_value:
+
+                    if user_input == "1":
+                        data[0] = input_alpha("Enter new name: ").strip()
+                        print(f"Successfully changed username to {data[0]}")
+
+                    elif user_input == "2":
+                        new_password = input(
+                            "Enter new password (min 8 character): ").strip()
+                        while len(password) < 8:
+                            print("Password too short")
+                            new_password = input(
+                                "Enter new password (min 8 character): ")
+                        data[1] = new_password
+                        print(f"Successfully changed password to {data[1]}")
+
+                    elif user_input == "3":
+                        data[2] = input_email(
+                            "Enter new email(must in @gmail.com): ").strip()
+                        print(f"Successfully changed email to {data[2]}")
+
+                    elif user_input == "4":
+                        data[4] = input_age("Enter your new age: ", 18, 50)
+
+                        print(f"Successfully changed age to {str(data[4])}")
+
+                    elif user_input == "5":
+                        data[5] = input_int(
+                            "Enter new contact number: +60 ")
+                        print(
+                            f"Successfully changed contact number to {data[5]}")
+                    f.write(" | ".join(data) + "\n")
+                else:
+                    f.write(line)
+
+    print("Invalid number.Please try again...")
 
 # Main page
 
@@ -301,25 +262,33 @@ def login_page():
 
             logged_in = False
 
-            # Check admin
-            if os.path.exists(file_path_admin) and login_acc(file_path_admin, username, password):
-                admin()
-                logged_in = True
+            # Admin
+            if os.path.exists(file_path_admin):
+                id_value = login_acc(file_path_admin, username, password)
+                if id_value:
+                    admin(id_value)
+                    logged_in = True
 
-            # Check coaches
-            elif os.path.exists(file_path_coaches) and login_acc(file_path_coaches, username, password):
-                coach()
-                logged_in = True
+            # Coaches
+            if os.path.exists(file_path_coaches):
+                id_value = login_acc(file_path_admin, username, password)
+                if id_value:
+                    coach(id_value)
+                    logged_in = True
 
             # Check receptionist
-            elif os.path.exists(file_path_receptionist) and login_acc(file_path_receptionist, username, password):
-                receptionist()
-                logged_in = True
+            if os.path.exists(file_path_receptionist):
+                id_value = login_acc(file_path_admin, username, password)
+                if id_value:
+                    receptionist(id_value)
+                    logged_in = True
 
             # Check trainee
-            elif os.path.exists(file_path_trainee) and login_acc(file_path_trainee, username, password):
-                trainee()
-                logged_in = True
+            if os.path.exists(file_path_trainee):
+                id_value = login_acc(file_path_admin, username, password)
+                if id_value:
+                    trainee(id_value)
+                    logged_in = True
 
             if logged_in:
                 break
@@ -341,7 +310,7 @@ def login_page():
 # Admin Page
 
 
-def admin():
+def admin(id_value):
     # ["Register Coaches", "Delete Coaches","Register Receptionist", "Delete receptionist", "View Montly Income", "Store Money Income", "Update profile",  "Login Out", "Quit"]
     clear_screen()
     while True:
@@ -372,7 +341,7 @@ def admin():
             store_montly_income()
 
         elif user_input == "7":  # Update Profile
-            update_profile(file_path_admin)
+            update_profile(file_path_admin, id_value)
 
         elif user_input == "8":  # Login Out
             print("Logging Out....")
