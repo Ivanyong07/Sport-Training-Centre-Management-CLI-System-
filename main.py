@@ -32,6 +32,7 @@ update_profile_options = ["Change Username", "Change Password",
                           "Change Email", "Change Age", "Change Contact Number", "Quit "]
 
 # Functions
+date = datetime.datetime.now()
 
 
 def clear_screen():
@@ -64,10 +65,10 @@ def input_int(num, min_num=None, max_num=None):
         if user_input.isdigit():
             num = int(user_input)
             if min_num is not None and num < min_num:
-                print(f"Value must be >= {min_val}")
+                print(f"Value must be >= {min_num}")
                 continue
             if max_num is not None and num > max_num:
-                print(f"Value must be <= {max_val}")
+                print(f"Value must be <= {max_num}")
                 continue
             return num
         print("Invalid input. Only digits allowed.")
@@ -99,7 +100,7 @@ def input_sport():
             print("Invalid sport(s):", ", ".join(invalid_sports))
             print("Please try again...")
         else:
-            return True
+            return sport_choice
 
 
 # Accounts Functions
@@ -121,6 +122,7 @@ def login_acc(file_path, username, password):  # login page
 
 def register_acc(file_path, role=""):
     clear_screen()
+    register = False
     print(f"--Register {role}---")
     name = input_alpha("Enter username: ").strip()
     password = input("Enter password (min 8 character): ").strip()
@@ -134,22 +136,29 @@ def register_acc(file_path, role=""):
                         10000000, 999999999)
     sport = input_sport()
     with open(file_path, 'a') as f:
-        line = f"{name} | {password} | {email} | {acc_id} | {str(age)} | {contact} | {sport}\n"
+        line = f"{name} | {password} | {email} | TP{acc_id} | {str(age)} | +60{contact} | {sport}\n"
         f.write(line)
-    print(f"---{role} Register Successful!---")
+    clear_screen()
+    register = True
+    if register:
+        print(f"---{role} Register Successful!---")
+    else:
+        print(f"Register {role} failed")
+    input("\nPress Enter to return to the Admin Menu...")
 
 
 def delete_acc(file_path):
+    clear_screen()
     if not os.path.exists(file_path):
         print("No account found")
         return
+    deleted = False
     target = input("Enter ID to delete (eg TP200): ").strip()
     if not target.upper().startswith("TP"):
         target = "TP" + target
 
     with open(file_path, "r") as file:
         lines = file.readlines()
-
     with open(file_path, "w") as f:
         for line in lines:
             if not line.strip():
@@ -165,13 +174,13 @@ def delete_acc(file_path):
             if coach_tp.upper() == target.upper():
                 deleted = True
                 continue   # skip writing this line
-
             f.write(line)
 
     if deleted:
-        print("Successful")
+        print("---Successful---")
     else:
-        print("Coach TP not found")
+        print("---Coach TP not found---")
+    input("\nPress Enter to return to the Admin Menu...")
 
 
 def update_profile(file_path, id_value):
@@ -268,27 +277,32 @@ def login_page():
                 if id_value:
                     admin(id_value)
                     logged_in = True
+                    return
 
             # Coaches
             if os.path.exists(file_path_coaches):
-                id_value = login_acc(file_path_admin, username, password)
+                id_value = login_acc(file_path_coaches, username, password)
                 if id_value:
                     coach(id_value)
                     logged_in = True
+                    return
 
             # Check receptionist
             if os.path.exists(file_path_receptionist):
-                id_value = login_acc(file_path_admin, username, password)
+                id_value = login_acc(
+                    file_path_receptionist, username, password)
                 if id_value:
                     receptionist(id_value)
                     logged_in = True
+                    return
 
             # Check trainee
             if os.path.exists(file_path_trainee):
-                id_value = login_acc(file_path_admin, username, password)
+                id_value = login_acc(file_path_trainee, username, password)
                 if id_value:
                     trainee(id_value)
                     logged_in = True
+                    return
 
             if logged_in:
                 break
@@ -329,7 +343,7 @@ def admin(id_value):
             delete_acc(file_path_coaches)
 
         elif user_input == "3":  # Register Receptionist
-            register_acc(file_path_receptionist, Receptionist)
+            register_acc(file_path_receptionist, "Receptionist")
 
         elif user_input == "4":  # Delete receptionist
             delete_acc(file_path_receptionist)
@@ -359,7 +373,6 @@ def admin(id_value):
 
 def store_montly_income():
     date = datetime.datetime.now()
-
     money_income = input("Please enter money income: RM ")
     month = date.strftime("%B")
     day = date.strftime("%A")
@@ -392,7 +405,7 @@ def view_montly_income():
 # ========  Receptionist
 
 
-def receptionist():
+def receptionist(id_value):
 
     # ["Regiter Trainee", "Update Trainning", "Payment", "Generate Receipt", "Request", "Update Profile", "Login Out", "Quit"]
     clear_screen()
@@ -400,12 +413,12 @@ def receptionist():
         print("Welcome to Receptionist Sport-Training Centre Management System")
 
         for i, receptionist_option in enumerate(receptionist_options, start=1):
-            print(f"{i}, {receptionist_option}")
+            print(f"{i}. {receptionist_option}")
 
         user_input = input("Enter your choice (1-8)")
 
         if user_input == "1":
-            receptionist_register_trainee()
+            register_acc(file_path_trainee, "Receptionist")
 
         elif user_input == "2":
             receptionist_update_trainning()
@@ -420,7 +433,7 @@ def receptionist():
             receptionist_request()
 
         elif user_input == "6":
-            update_profile(file_path_receptionist)
+            update_profile(file_path_receptionist, id_value)
 
         elif user_input == "8":  # Login Out
             print("Logging Out....")
@@ -437,96 +450,7 @@ def receptionist():
             print("Invalid number..Please try again....\n\n")
 
 
-def receptionist_register_trainee():
-    clear_screen()
-    password_length = 8
-    min_age = 18
-    max_age = 80
-    min_contact_num = 8
-    max_contact_num = 9
-
-    while True:
-        name = input("Please enter name: ")
-
-        if not name.isalpha():
-            print("Invalid name..Please make sure name is alphabet")
-            continue
-        else:
-            break
-
-    while True:
-        password = input("Please enter a new password: ")
-
-        if len(password) < password_length:
-            print(f"Password must be at least {password_length} word")
-            continue
-
-        else:
-            break
-    while True:
-        email = input("Please enter email address: ")
-
-        if not email.lower().endswith("@gmail.com"):
-            print("Invalid Email..Please try again")
-            continue
-        else:
-            break
-
-    acc_id = input("Please register new ID: TP ")
-
-    while True:
-        age = input("Please enter age: ")
-
-        if not age.isdigit():
-            print("Age must in number")
-            continue
-
-        age = int(age)
-
-        if min_age <= age <= max_age:
-            break
-        else:
-            print(f"Age must be between {min_age} to {max_age}")
-            continue
-
-    while True:
-        contact_number = input("Please enter contact number: +60 ")
-        if not contact_number.isdigit():
-            print("Invalid contact number")
-            continue
-
-        if min_contact_num <= len(contact_number) <= max_contact_num:
-            break
-        else:
-            print("Invalid phone number...please try again")
-            continue
-
-    while True:
-
-        for i, sport in enumerate(sports, start=1):
-            print(f"{i}. {sport}")
-        sport_choice = input(
-            "Please Assign sport(s) (separate with comma): ").lower().strip()
-
-        chosen_sports = [s.strip() for s in sport_choice.split(",")]
-
-        invalid_sports = [s for s in chosen_sports if s not in sports]
-
-        if invalid_sports:
-            print("Invalid sport(s):", ", ".join(invalid_sports))
-            print("Please try again...")
-        else:
-            break
-
-    with open(file_path, 'a') as f:
-        f.write(name + " | " + password + " | " + email + " | " +
-                "TP" + acc_id + " | " + str(age) + " | " + contact_number + " | " + sport_choice + " | " + "unpaid" + "\n")
-    clear_screen()
-    print("-" * 50)
-    print("Register Successful!")
-
-
-def update_trainning():
+def update_trainning(program_value):
     print("Comming Soon")
 
 
@@ -546,12 +470,12 @@ def request():
 File = "coach_program.txt"
 
 
-def coach():
+def coach(id_value):
     # ["Add Training Programs", "Update Training Program", "Delete Training Program", "View the list of trainees", "Update Profile", "Login Out", "Quit"]
     while True:
         print("\n---Welcome to Coach Sport-Training Centre Management System---")
         for i, coaches_option in enumerate(coaches_options, start=1):
-            print(f"[{i}]. {admin_option}")
+            print(f"[{i}]. {coaches_option}")
 
         choice = input("Choice: ")
 
@@ -568,15 +492,15 @@ def coach():
             view_program()
 
         elif choice == "5":
-            update_profile(file_path_coaches)
+            update_profile(file_path_coaches, id_value)
 
-        elif user_input == "6":  # Login Out
+        elif user_input == "6":
             print("Logging Out....")
             clear_logout()
             return
 
         elif choice == "7":
-            clear_screen()  # Quit
+            clear_screen()
             print(
                 "Thank you for using Admin Sport-Training Centre Management System..Good Bye!")
             exit()
@@ -584,21 +508,10 @@ def coach():
             clear_screen()
             print("Invalid Answer, please try again")
 
-# adding program coach
-
 
 def add_program():
-    coach_program = "coach_program.txt"
 
-    while True:
-
-        name = input("Program Name: ")
-        if not name.isalpha():
-            print("Invalid name..Please make sure name is alphabet")
-            continue
-        else:
-            break
-        break
+    name = input_alpha("Program Name: ")
 
     while True:
 
@@ -615,7 +528,7 @@ def add_program():
         date = input("Date (DD/MM/YYYY): ")
 
         try:
-            datetime.strptime(date, "%d/%m/%Y")
+            datetime.datetime.strptime(date, "%d/%m/%Y")
             print("date saved")
             break
         except ValueError:
@@ -632,18 +545,18 @@ def add_program():
 
     while True:
 
-        record = name + "|" + charge + "|" + date + "|" + time + "\n"
+        record = name + " | " + charge + "  |" + date + " | " + time + "\n"
 
-        with open(coach_program, "a") as file:
+        with open(file_path_trainee_schedule, "a") as file:
             file.write(record)
-
             print("Program added successfully.")
         return
 
-
 # update program
+
+
 def update_program():
-    if not os.path.exists(File):
+    if not os.path.exists(file_path_trainee_schedule):
         print("No file found.")
         return
 
@@ -651,7 +564,7 @@ def update_program():
     updated = False
     new_lines = []
 
-    with open(File, "r") as f:
+    with open(file_path_trainee_schedule, "r") as f:
         for line in f:
             name, charge, date, time = line.strip().split("|")
             if name.lower() == target.lower():
@@ -662,12 +575,12 @@ def update_program():
                 new_time = input("New time (2400): ")
 
                 new_lines.append(
-                    f"{name}|{new_charge}|{new_date}|{new_time}\n")
+                    f"{name} | {new_charge} | {new_date} | {new_time}\n")
                 updated = True
             else:
                 new_lines.append(line)
 
-    with open(File, "w") as f:
+    with open(file_path_trainee_schedule, "w") as f:
         f.writelines(new_lines)
 
     if updated:
@@ -675,10 +588,11 @@ def update_program():
     else:
         print("Program not found.")
 
-
 # delete program
+
+
 def delete_program():
-    if not os.path.exists(File):
+    if not os.path.exists(file_path_trainee_schedule):
         print("No file found.")
         return
 
@@ -686,9 +600,9 @@ def delete_program():
     deleted = False
     new_lines = []
 
-    with open(File, "r") as f:
+    with open(file_path_trainee_schedule, "r") as f:
         for line in f:
-            name = line.split("|")[0]
+            name = line.split(" | ")[0]
             if name.lower() == target.lower():
                 deleted = True
             else:
@@ -702,15 +616,13 @@ def delete_program():
     else:
         print("Program not found.")
 
-# view program
-
 
 def view_program():
-    if not os.path.exists(File):
+    if not os.path.exists(file_path_trainee_schedule):
         print("No programs found.")
         return
 
-    with open(File, "r") as f:
+    with open(file_path_trainee_schedule, "r") as f:
         print("\n--- PROGRAM LIST ---")
         for line in f:
             name, charge, date, time = line.strip().split("|")
