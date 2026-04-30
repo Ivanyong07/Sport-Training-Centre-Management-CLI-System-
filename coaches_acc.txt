@@ -1,0 +1,7 @@
+aiwen | 12345678 | open@gmail.com | TP14212724 | 19 | +6012345678 | 148587942948 | chinese | chinese | pingpong
+diajidja | 12345678 | open@gmail.com | TP1313131 | 19 | +6012345678 | 148587942948 | chinese | chinese | pingpong
+ka | 098765432 | we@gmail.com | TP14234716 | 20 | +6012345678 | 123456789 | Malaysia | chinese | football
+ja | 12345678 | makd@gmail.com | TP14235107 | 20 | +6012345678 | 12345678 | Malaysia | chinese | badminton
+Jsias | 138138201 | dhaid@gmail.com | TP09102655 | 19 | +6012345678 | 3729372-239384 | Malaysia | Chinese,Malay | hockey
+dadaidh | 173924920 | iadu@gmail.com | TP09102749 | 30 | +6012345678 | 471940127410 | China | Chinese, Malay | cricket
+yong | 12345678 | ivan@gamil.com | TP09194254 | 30 | +6012345678 | 123456g55454 | Malaysia | Chinese | badminton

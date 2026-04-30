@@ -1,0 +1,1437 @@
+# File storage
+file_path_money = "money_income.txt"
+file_path_trainee_schedule = "trainee_schedule.txt"
+file_path_admin = "admin_acc.txt"
+file_path_coaches = "coaches_acc.txt"
+file_path_receptionist = "receptionist_acc.txt"
+file_path_trainee = "trainee_acc.txt"
+file_path_request = "request.txt"
+file_path_receipt = "receipt.txt"
+
+# Options
+DEFINE sports_options AS LIST pingpong, 
+                                badminton, 
+                                swimming, 
+                                pickleball, 
+                                volleyball, 
+                                football
+
+DEFINE main_menu_options AS LIST Log in, Quit
+
+DEFINE admin_options AS LIST "Register Coaches", 
+                        "Delete Coaches",
+                        "Register Receptionist", 
+                        "Delete receptionist",
+                        "View Montly Income", 
+                        "Store Money Income", 
+                        "Update Profile", 
+                        "Log Out", "Quit"
+
+DEFINE receptionist_options AS LIST "Register Trainee", 
+                                "Delete Trainee",
+                                "Update Trainning", 
+                                "Payment", 
+                                "Generate Receipt", 
+                                "Request", 
+                                "Update Profile", 
+                                "Log Out", "Quit"
+
+DEFINE coaches_options AS LIST "Add Training Programs", 
+                        "Update Training Program",
+                        "Delete Training Program", 
+                        "View Trainees", 
+                        "Update Profile", 
+                        "Log Out", "Quit"
+                   
+define trainee_options AS LIST "View schedule", 
+                        "View payment",
+                        "Request Change Training Program", 
+                        "Update Profile", 
+                        "Log Out", "Quit"
+
+DEFINE update_profile_options AS LIST "Change Username", 
+                                "Change Password",
+                                "Change Email", 
+                                "Change Age", 
+                                "Change Contact Number", 
+                                "Change IC or Passport", 
+                                "Change Nationality", 
+                                "Change Langauge", "Back"
+
+DEFINE send_requests AS LIST  "Send Request", 
+                                "Delete Request", 
+                                "Update Request", 
+                                "Back"
+
+=============================================Global Functions
+
+CREATE STR width
+width = 90 
+
+DEFINE FUNCTION clear_screen()
+    CALL System(Clear Terminal)
+    OUTPUT "=" * width
+    OUTPUT "Brilliant Sport-Training Centre(BSTC)"
+    OUTPUT "=" * width
+END FUNCTION
+
+DEFINE FUNCTION clear_logout()
+    CALL System(Clear Terminal)
+    OUTPUT "=" * width
+    OUTPUT "Brilliant Sport-Training Centre(BSTC)"
+    OUTPUT "=" * width
+    OUTPUT "Loging Out..."
+    OUTPUT "Login Successful..."
+END FUNCTION
+
+DEFINE FUNCTION input_alpha(username)
+    CREATE INT min_name
+    min_name = 1
+    WHILE TRUE DO
+        CREATE STR user_input
+        user_input = TRIM(INPUT(username))
+        IF user_input IS alphabet AND len(user_input) >= min_name DO
+            RETURN user_input
+        OUTPUT "Only alphabet allowed"
+    END WHILE LOOP
+END FUNCTION
+
+DEFINE FUNCTION input_int(num, min_num=NONE, max_num=NONE)
+    WHILE TRUE DO
+        CREATE VARIABLE user_input
+        user_input= INPUT(NUM)
+        IF user_input IS NOT DIGIT:
+            CONTINUE
+        CREATE VARIABLE val
+        val = INTEGER(user_input)
+
+        IF min_num IS NOT NONE AND val IS SMALLER THAN min_num THEN
+            OUTPUT F"Value must be >= {min_num}"
+        ELSE IF max_num IS NOT NONE AND val IS BIGGER THAN max_num THEN
+            OUTPUT "Value must be <= {max_num}"
+            CONTINUE
+        ELSE:
+            RETURN STRING(val)
+    END WHILE LOOP
+END FUNCTION
+
+DEFINE FUNCTION input_email(email)
+    WHILE TRUE DO
+        CREATE STR user_input
+        user_input = INPUT(email)
+        user_input = TRIM(user_input)
+
+        IF "@" in user_input AND user_input.endswith(".com") DO
+            RETURN user_input
+        END IF
+    END WHILE LOOP
+END FUNCTION
+
+DEFINE FUNCTION input_id(user_input)
+    
+    CREATE STR user_id
+    user_id = UPPERCASE(TRIM(INPUT(user_input)))
+
+    IF user_id NOT START WITH "TP" DO
+        user_id = "TP" + user_id
+        return user_id
+    ELSE
+        RETURN user_id
+    END IF
+END FUNCTION
+
+DEFINE FUNCTION input_sport(sport)
+
+    WHILE TRUE DO
+        FOR EACH s IN sports_options
+            OUTPUT f"-{s}"
+        CREATE VARIABLE STR sport_choice
+        sport_choice = TRIM(LOWERCASE(input(sport)))
+
+        // List Comprehension
+        CREATE VARIABLE LIST chosen_sports
+        SET chosen_sports = EMPTY LIST
+        SET raw_list = SPLIT sport_choice BY ','
+        FOR EACH s IN raw_list DO
+            ADD TRIM(s) TO chosen_sports
+        END FOR LOOP
+
+        // List Comprehension
+        CREATE VARIABLE LIST invalid_sports
+        SET invalid_sports = EMPTY LIST
+        FOR EACH s IN invalid_sports DO
+            IF s NOT IN sports_options THEN
+                ADD s TO invalid_sports
+            END IF
+        END FOR LOOP
+
+        IF invalid_sports IS NOT EMPTY
+            OUTPUT "Invalid sport(s):", ", ".join(invalid_sports)
+            OUTPUT "Please try again..."
+        ELSE
+            RETURN sport_choice
+        END IF
+    END WHILE
+END FUNCTION
+
+
+DEFINE FUNCTION input_date(date)
+    WHILE TRUE DO
+        CREATE INT enter_date
+        enter_date = INPUT(date)
+        TRY:
+            CONVERT the text enter_date into a Date Object
+            USING the pattern: Day, then Month, then 4-digit Year
+            SEPARATED by forward slashes (/)
+            STORE the result for later use
+            OUTPUT "Date saved"
+            RETURN enter_date
+        EXCEPT VALUEERROR:
+            OUTPUT "Invalid date. Please use DD/MM/YYYY (e.g 04/05/2025)"
+END FUNCTION
+
+DEFINE FUNCTION input_time(time) DO
+    CREATE INT open_time
+    CREATE INT closed_time
+    open_time = 900
+    closed_time = 2200
+
+    WHILE TRUE DO
+        CREATE VARIABLE enter_time
+        user_input = INPUT(time)
+        
+        IF user_input contains ONLY digits AND length is exactly 4:
+            EXTRACT first two digits as "hours"
+            EXTRACT last two digits as "minutes"
+            
+            IF "hours" is between 0 and 23 AND "minutes" is between 0 and 59:
+                STOP loop and RETURN the user_input
+            END IF
+        END IF
+        OUTPUT "Invalid time" error message
+    END WHILE LOOP
+END FUNCTION
+
+
+DEFINE time_conflict(start_time, end_time)
+    CREATE INT min_time
+    CREATE INT s_time
+    CREATE INT e_time
+    min_time = 30
+    s_time = int(start_time)
+    e_time = int(end_time)
+
+    IF s_time >= e_time DO
+        OUTPUT "\n[!] Error: Start time cannot be later than or equal to End time."
+        OUTPUT "    (Entered: {s_time} - {e_time})"
+        RETURN TRUE
+
+    IF (e_time - s_time) < min_time DO
+        OUTPUT "[!] Error: Session must be at least 30 minutes long."
+        RETURN TRUE
+
+    ELSE
+        RETURN FALSE
+    END IF
+END FUNCTION
+
+
+FUNCTION check_id_exists(file_path, new_id)
+    IF the file at "file_path" does not exist:
+        RETURN FALSE (ID cannot exist if there is no file)
+    
+    OPEN the file in READ mode
+    FOR each line in the file:
+        // Clean and tokenize the line
+        REMOVE extra spaces and new-lines from the line
+        SPLIT the line into a list called "data" using "|" as the separator
+        TRIM any extra spaces from each item in "data"
+        
+        // Check for the ID in the 4th column (index 3)
+        IF the "data" list has at least 6 AND the 4th item matches "new_id":
+            RETURN TRUE (Stop searching, ID was found)
+        
+    CLOSE the file
+    RETURN FALSE (If we reach the end of the file without a match)
+END FUNCTION
+
+
+DEFINE update_schedule_data(trainee_id, new_name)
+    IF NOT EXISTS FILE file_path_trainee_schedule DO
+        RETURN
+    ELSE
+        OPEN FILE file_path_trainee_schedule IN READ MODE
+        READ EACH lines
+    END IF
+    FOR each item in lines WITH index starting from 1 ASSIGN VARIABLE AS line DO
+            parts = SPLIT(TRIM(line), " | ")
+            IF len(parts) >= 9 AND parts[INDEX 3] == trainee_id DO
+            parts[INDEX 2] = new_name
+            lines[i] = " | ".JOIN(parts) + "\n"
+    END FOR LOOP
+    OPEN FILE file_path_trainee_schedule IN WRITE MODE
+        OVERWRITE lines
+    CLOSE FILE
+END FUNCTION
+
+
+======================================================= Accounts Functions
+DEFINE login_acc(file_path, username, password):  # login page
+    TRY DO
+        OPEN FILE NAME "file_path" IN READ MODE ASSIGN VARIBALE AS r
+            READ f EACH LINE
+    EXCEPT FileNotFoundError DO
+        OUTPUT "---File not found---"
+        RETURN
+    
+    FOR EACH line IN lines:
+        CREATE VARIABLE data
+            data = TRIM(line)
+            SPLIT data BY " | "
+            IF username == data[INDEX 0] and password == data[INDEX 1]:
+                CALL FUNCTION clear_screen()
+                OUTPUT "Login Successful"
+                CREATE VARIABLE login_acc_id
+                login_acc_id = data[INDEX 3]
+                RETURN login_acc_id
+            END IF
+    ELSE
+        RETURN None
+END FUNCTION
+
+DEFINE register_acc(file_path, role="")
+    CALL FUNCTION clear_screen()
+    OUTPUT "--Register {role}---"
+
+    CALL FUNCTION clear_screen()
+    OUTPUT F"--Register {role}---"
+    
+    CREATE STR name
+    name = TRIM(CALL FUNCTION input_alpha("Enter username: "))
+
+    CREATE STR password
+    password = TRIM(INPUT("Enter password (min 8 character): "))
+    WHILE LEN(password) IS LESS THAN 8:
+        OUTPUT "Password too short"
+        password = INPUT "Enter password (min 8 character): "
+
+    CREATE STR email
+    email = CALL FUNCTION input_email("Enter email(must end in @gmail.com): ")
+
+    WHILE TRUE DO
+        CREATE STR now
+        CREATE unique_id
+        FORMAT now AS ""%d%H%M%S"
+        unique_id = "TP" + CURRENT DATE "%d%H%M%S"
+        IF CALL FUNCTION check_id_exists(file_path, unique_id) DO
+            CONTINUE
+        ELSE
+            BREAK THE LOOP
+        END IF
+    END WHILE LOOP
+
+    CREATE INT age
+    age =  CALL FUNCTION input_int("Enter age: ", min_num=18, max_num=80)
+
+    CREATE INT contact
+    contact =  CALL FUNCTION input_int("Enter contact number: +60 ",
+                        min_num=10000000, max_num=999999999)
+
+    CREATE STR passport_ic
+    passport_ic = INPUT("Enter your IC or Passport:")
+
+    CREATE STR national
+    national = INPUT("Enter your nationality: ")
+
+    CREATE STR language
+    language = INPUT("Enter the language you know: ")
+
+    CREATE STR sport
+    sport = CALL FUNCTION input_sport "Enter your sport(separate with (, ,)): "
+
+    OPEN FILE NAME "file_path" IN APPEND MODE
+            APPEND "{name} | {password} | {email} | {unique_id} | {str(age)} | +60{contact} | {passport_ic} | {national} | {sport}\n"IN THE file_path
+    CLOSE FILE
+
+    OUTPUT "---{role} Register Successful!---"
+    INPUT "\nPress Enter to return to the Admin Menu..."
+    CALL FUNCTION clear_screen()
+END FUNCTION
+
+
+DEFINE FUNCTION delete_acc(file_path, role=""):
+    CALL FUNCTION clear_screen()
+    TRY DO 
+        OPEN FILE file_path IN READ MODE ASSIGN VARIABLE AS file
+        lines = READ EACH LINES INSIDE file
+    EXCEPT FILE NOT FOUND DO
+        OUTPUT "---File not found---"
+        OUTPUT "Press Enter to return..."
+        RETURN
+    OUTPUT "=" * width
+    OUTPUT "{'Trainee TP':<15} {'Name':<15} {'Email':<20} {'Contact Number':<15}"
+    OUTPUT "=" * width
+
+    FOR EACH line IN lines DO
+
+        #LIST Comprehension
+        CREATE LIST parts
+        SET parts AS EMPTY LIST
+        line = STRIP(line)
+        parts = SPLIT line BY "|"        
+        FOR EACH s IN parts DO
+        s = STRIP(s)
+        IF LEN(parts) >= 4:
+            OUTPUT "{parts[3]:<15} {parts[0]:<15} {parts[2]:<20} {parts[5]:<15}"
+    END LOOP
+
+    CREATE STR delete_tp
+    delete_tp = INPUT "\nEnter {role}'s ID to delete (eg TP200) or 'q' to quit: "
+
+    IF delete_tp == "q" DO
+        RETURN
+    END IF
+    IF delete_tp NOT START WITH "TP" DO
+        delete_tp = "TP" + delete_tp
+
+    CREATE BOOLEAN deleted
+    CREATE ARRAY new_lines
+    deleted = FALSE
+
+    FOR EACH line IN lines DO
+        parts = SPLIT(TRIM(line), "|")
+        IF LENGTH(parts) >= 4 AND TRIM(parts[3]).UPPER() == delete_tp.UPPER() THEN
+            deleted = TRUE
+        ELSE
+            ADD line TO new_lines
+        END IF
+    END FOR
+
+    IF deleted TRUE DO
+        OPEN FILE file_path IN WRITE MODE ASSIGN VARIABLE AS f
+            WRITE EACH LINE IN new_lines
+        CLOSE FILE
+
+        IF "coaches" IN file_path OR "trainee_acc" IN file_path DO
+            OPEN FILE file_path_trainee_schedule IN READ MODE ASSIGN AS s
+                s_lines = s.readlines()
+
+            CREATE LIST updated_schd
+            SET LIST 
+            FOR EACH l IN s_lines DO
+                SPLIT l BY " | " INTO parts
+                IF parts[0] != delete_tp AND parts[3] != delete_tp THEN
+                    ADD l TO updated_schd
+                END IF
+            END FOR LOOP
+
+            OPEN FILE file_path_trainee_schedule IN WRITE MODE ASSIGN VARIABLE AS s
+                WRITE EACH LINE OF updated_schd TO s
+            CLOSE FILE
+        END IF
+        OUTPUT "---Deleted Successful---"
+    ELSE
+        OUTPUT "---Coach TP not found---"
+    INPUT "\nPress Enter to return to the {role} Menu..."
+END FUNCTION
+
+DEFINE FUNCTION update_profile(file_path, id_value):
+    # ["Change Username", "Change Password", "Change Email", "Change Age", "Change Contact Number", "Change IC or Passpo", "Change Nationality", "Change Langauge", "Back"]
+    TRY DO
+        OPEN FILE file_path IN READ MODE ASSIGN VARIABLE AS f
+            lines = READ EACH LINE INSIDE f
+    except FILE NOT FOUND DO
+        OUTPUT "--- File Not Found ---"
+        INPUT "Press Enter to return:"
+        RETURN
+    WHILE TRUE DO
+        CALL FUNCTION clear_screen()
+        FOR each item in update_profile_options WITH index starting from 1 DO
+            OUTPUT "[" + index + "]. " + item
+        END FOR LOOP
+        CREATE STR user_input
+        user_input = INPUT "Enter choice: "
+        
+        IF user_input == "9" DO
+            RETURN
+        END IF
+
+        IF user_input in ["1", "2", "3", "4", "5", "6", "7", "8"] DO
+            CREATE BOOLEAN update
+            update = FALSE
+
+            FOR i IN RANGE(len(lines)):
+                CREATE STR data
+                data = TRIM(lines[INDEX i])
+                data = SPLIT BY " | "
+                IF LEN(data) >= 6 AND data[INDEX 3] == id_value DO
+
+                    IF user_input == "1" DO
+                        data[INDEX 0] = CALL FUNCTION TRIM(input_alpha"Enter new name: ")
+                        OUTPUT "Successfully changed username to {data[INDEX 0]}"
+                        IF "trainee" IN file_path DO
+                            CALL FUNCTION update_schedule_data(id_value, data[INDEX 0])
+
+                    ELSE IF user_input == "2" DO
+                        CREATE STR new_password
+                        new_password = TRIM(INPUT "Enter new password (min 8 character): ")
+                        WHILE LEN(new_password) < 8 DO
+                            OUTPUT "Password too short"
+                            new_password = INPUT "Enter new password (min 8 character): "
+                        data[INDEX 1] = new_password
+                        OUTPUT "Successfully changed password to {data[INDEX 1]}"
+
+                    ELSE IF user_input == "3" DO
+                        data[INDEX 2] = CALL FUNCTION input_email TRIM("Enter new email(must in @gmail.com): ")
+                        OUTPUT "Successfully changed email to {data[2]}"
+
+                    ELSE IF user_input == "4" DO
+                        data[INDEX 4] = CALL FUNCTION input_int("Enter your new age: ", 18, 50)
+                        OUTPUT "Successfully changed age to {data[INDEX 4]}"
+
+                    ELSE IF user_input == "5"
+                        data[5] = CALL FUNCTION input_int "Enter new contact number: +60 ", min_num=10000000, max_num=999999999
+                        OUTPUT "Successfully changed contact number to {data[INDEX 5]}"
+
+                    ELSE IF user_input == "6" DO
+                        data[INDEX 6] = CALL FUNCTION input_int "Enter new IC or Passport: "
+                        OUTPUT "Successfully changed IC or Passport to {data[INDEX 6]}"
+
+                    ELSE IF user_input == "7" DO
+                        data[INDEX 7] = INPUT "Enter new Nationality: "
+                        OUTPUT "Successfully changed Nationality to {data[INDEX 7]}"
+
+                    ELSE IF user_input == "8" DO
+                        data[INDEX 8] = INPUT "Enter new Language: "
+                        OUTPUT "Successfully changed Language to {data[INDEX 8]}"
+
+                    ELSE
+                    lines[INDEX i] = " | ".JOIN(data) + "\n"
+                    update = TRUE
+                    BREAK
+                    END IF
+
+            IF update TRUE DO
+                OPEN FILE file_path IN WRITE MODE ASSIGN VARIABLE AS f
+                    WRITE EACH LINES IN f
+                OUTPUT "--- Profile Updated and Saved ---"
+                OUTPUT "Press enter to continue:"
+            ELSE
+                OUTPUT "Error: User ID not found in file."
+        ELSE DO
+            OUTPUT "Invalid number. Please try again..."
+        END IF
+    END WHILE LOOP
+END FUNCTION
+
+
+
+DEFINE FUNCTION save_receipt(receipt_code, target_id, name, n_date, start_time, end_time, program, fee):
+    CALL FUNCTION clear_screen()
+    CREATE STR receipt_template
+    receipt_template = (
+        "{'=' * 50}\n"
+        "{'Your Receipt':^45}\n"
+        "{'Brilliant Sport-Training Centre (BSTC)':^45}\n"
+        "{'(BSTC)':^45}\n"
+        "{'=' * 50}\n"
+        "{'Receipt Code:':<30} {receipt_code}\n"
+        "{'Trainee ID:':<30} {target_id}\n"
+        "{'Name:':<30} {name}\n"
+        "{'Date:':<30} {n_date}\n"
+        "{'Start Training Time:':<30} {start_time}\n"
+        "{'End Training Time:':<30} {end_time}\n"
+        "{'=' * 50}\n"
+        "{'Program:':<30} {program}\n"
+        "{'Total Amount:':<30} RM {float(fee):.2f}\n"
+        "{'=' * 50}\n"
+        "{'--- THANK YOU ---':^45}\n"
+    )
+    RETURN receipt_template
+END FUNCTION
+
+========================================== Main Menu
+
+DEFINE FUNCTION main_menu():
+    CALL FUNCTION clear_screen()
+    WHILE TRUE DO
+        FOR each item in main_menu_options WITH index starting from 1 DO
+            OUTPUT "[" + index + "]. " + item
+        END FOR LOOP
+
+        main_menu_choice = INPUT "Enter choice (1-2): "
+        IF main_menu_choice == "1" THEN
+            CALL FUNCTION login_page()
+        ELSE IF main_menu_choice == "2" THEN
+            OUTPUT "Thank you for using Brilliant Sport-Training Centre, Goodbye!"
+            RETURN //END THE PROGRAM
+        ELSE
+            OUTPUT "Invalid choice...please choose number between 1 to 2"
+        END IF
+    END WHILE LOOP
+END FUNCTION
+
+
+DEFINE FUNCTION login_page()
+    login_attempts = 3
+
+    WHILE login_attempts > 0 THEN
+        OUTPUT "Please follow the instruction to login"
+
+        DEFINE VARIABLE username
+        DEFINE VARIABLE password
+
+        username = INPUT "Enter your username: "
+        password = INPUT "Enter your password: "
+
+        DEFINE VARIABLE logged_in = FALSE
+
+        // ADMIN LOGIN
+        IF FILE file_path_admin EXISTS THEN 
+            id_value = CALL FUNCTION login_acc(file_path_admin, username, password)
+            IF id_value IS EXISTS THEN
+                CALL FUNCTION admin(id_value)
+                logged_in = TRUE
+                RETURN //exit login_page and go back to the function main_menu
+            END IF
+        END IF
+
+        // COACH LOGIN
+        IF FILE file_path_coaches EXISTS THEN
+            id_value = CALL FUNCTION login_acc(file_path_coaches, username, password)
+            IF id_value IS EXISTS THEN
+                CALL FUNCTION coach(id_value)
+                logged_in = TRUE
+                RETURN //exit login_page and go back to the function main_menu
+            END IF
+        END IF
+
+        // RECEPTIONIST LOGIN
+        IF FILE file_path_receptionist EXISTS THEN
+            id_value = CALL FUNCTION login_acc(file_path_receptionist, username, password)
+            IF id_value IS EXISTS THEN
+                CALL FUNCTION receptionist(id_value)
+                logged_in = TRUE
+                RETURN //exit login_page and go back to the function main_menu
+            END IF
+        END IF
+
+        // TRAINE LOGIN
+        IF FILE file_path_trainee EXISTS THEN 
+            id_value = CALL FUNCTION login_acc(file_path_trainee, username, password)
+            IF id_value IS EXISTS THEN
+                CALL FUNCTION trainee(id_value)
+                logged_in = TRUE
+                RETURN //exit login_page and go back to the function main_menu
+            END IF
+        END IF
+
+        // IF logged_in FAILED
+        login_attempts = login_attempts - 1
+        OUTPUT "Invalid password or username...Please try again"
+        OUTPUT "Attempts left: {login_attempts}"
+    END WHILE LOOP
+
+    OUTPUT "Login failed...Please try again later..."
+    EXIT PROGRAM
+END FUNCTION
+
+======================================================= ADMIN PAGE
+DEFINE FUNCTION admin(id_value):
+    WHILE TRUE THEN
+        CALL FUNCTION clear_screen()
+        OUTPUT "\n---Welcome to Admin Menu---"
+
+        FOR each item in admin_options WITH index starting from 1 DO
+            OUTPUT "[" + index + "]. " + item
+        END FOR LOOP
+
+        DEFINE VARIABLE user_input
+        user_input = INPUT "Enter your choice (1-9): "
+
+        IF user_input == "1" THEN
+            CALL FUNCTION register_acc(file_path_coaches, "Coaches")
+
+        ELSE IF user_input == "2" THEN
+            CALL FUNCTION delete_acc(file_path_coaches, "Coaches")
+
+        ELSE IF user_input == "3" THEN
+            CALL FUNCTION register_acc_receptionist(file_path_receptionist, "Receptionist")
+
+        ELSE IF user_input == "4" THEN
+            CALL FUNCTION delete_acc(file_path_receptionist, "Receptionist")
+
+        ELSE IF user_input == "5" THEN 
+            CALL FUNCTION view_money_income()
+
+        ELSE IF user_input == "6" THEN
+            CALL FUNCTION store_monthly_income()
+
+        ELSE IF user_input == "7"THEN
+            CALL FUNCTION update_profile(file_path_admin, id_value)
+
+        ELSE IF user_input == "8"THEN
+            OUTPUT "Logging Out...."
+            CALL FUNCTION clear_logout()
+            RETURN // RETURN BACK FUNCTION login_page()
+
+        ELSE IF user_input == "9" THEN
+            OUTPUT "Thank you for using Admin Sport-Training Centre Management System..Good Bye!"
+            EXIT PROGRAM
+        ELSE THEN
+            CALL FUNCTION clear_screen()
+            OUTPUT "Invalid number..Please try again...."
+        END IF
+    END WHILE LOOP
+END FUNCTION
+
+
+DEFINE FUNCTION register_acc_receptionist(file_path, role="")
+    CALL FUNCTION clear_screen()
+    OUTPUT "--Register {role}---"
+
+    CALL FUNCTION clear_screen()
+    OUTPUT F"--Register {role}---"
+    
+    CREATE STR name
+    name = TRIM(CALL FUNCTION input_alpha("Enter username: "))
+
+    CREATE STR password
+    password = TRIM(INPUT("Enter password (min 8 character): "))
+    WHILE LEN(password) IS LESS THAN 8:
+        OUTPUT "Password too short"
+        password = INPUT "Enter password (min 8 character): "
+
+    CREATE STR email
+    email = CALL FUNCTION input_email("Enter email(must end in @gmail.com): ")
+
+    WHILE TRUE DO
+        CREATE STR now
+        CREATE unique_id
+        FORMAT now AS ""%d%H%M%S"
+        unique_id = "TP" + CURRENT DATE "%d%H%M%S"
+        IF CALL FUNCTION check_id_exists(file_path, unique_id) DO
+            CONTINUE
+        ELSE
+            BREAK THE LOOP
+        END IF
+    END WHILE LOOP
+
+    CREATE INT age
+    age =  CALL FUNCTION input_int("Enter age: ", min_num=18, max_num=80)
+
+    CREATE INT contact
+    contact =  CALL FUNCTION input_int("Enter contact number: +60 ",
+                        min_num=10000000, max_num=999999999)
+
+    CREATE STR passport_ic
+    passport_ic = INPUT("Enter your IC or Passport:")
+
+    CREATE STR national
+    national = INPUT("Enter your nationality: ")
+
+    CREATE STR language
+    language = INPUT("Enter the language you know: ")
+
+    OPEN FILE NAME "file_path" IN APPEND MODE
+            WRITE "{name} | {password} | {email} | {unique_id} | {str(age)} | +60{contact} | {passport_ic} | {national} | {language}\n"IN THE file_path
+    CLOSE FILE
+
+    OUTPUT "---{role} Register Successful!---"
+    INPUT "\nPress Enter to return to the Admin Menu..."
+    CALL FUNCTION clear_screen()
+END FUNCTION
+
+DEFINE FUNCTION store_monthly_income()
+
+    GET current date and time
+    FORMAT time as HH:MM:SS
+    FORMAT date as DD/Month/YYYY
+
+    INPUT trainee ID
+    WHILE trainee ID format is invalid DO
+        OUTPUT "Invalid Trainee ID"
+        INPUT trainee ID again
+    END WHILE LOOP
+
+    INPUT money income
+    WHILE money income is not a valid number DO
+        OUTPUT "Invalid amount"
+        INPUT money income again
+    END WHILE LOOP
+
+    INPUT program name
+    WHILE program name is invalid DO
+        OUTPUT "Invalid program name"
+        INPUT program name again
+    END WHILE LOOP
+
+    INPUT payment method
+    WHILE payment method is not "cash" or "card" DO
+        OUTPUT "Invalid payment method"
+        INPUT payment method again
+    END WHILE LOOP
+
+    OPEN income file in append mode
+        WRITE trainee ID, program name, money income,
+              date, time, and payment method into file
+    CLOSE file
+
+    OUTPUT "Store Successful"
+    PROMPT user to press Enter to quit
+END FUNCTION
+
+
+DEFINE FUNCTION view_money_income()
+    TRY DO
+        OPEN FILE file_path_money IN READ MODE
+        READ all lines from file INTO lines
+        CLOSE file
+    CATCH file error
+        OUTPUT "File not found"
+        print("---No File Found---")
+        input("Press enter to quit---")
+    END TRY
+
+    CREATE STR user_input
+    CREATE FLOAT total
+    user_input = LOWER(TRIM(INPUT "Enter Sport or 'all': "))
+    total = 0.0
+    OUTPUT "=" * width
+    OUTPUT "Program", "Money Income", "Payment Method" in columns
+    OUTPUT "=" * width
+
+    CREATE STR found
+    found = FALSE
+    FOR EACH line IN lines DO
+        SPLIT line using " | " as separator AND TRIM()
+        STORE result IN data
+        IF LEN(data) >= 5 DO
+            CREATE STR current_sport
+            CREATE FLOAT amount
+            current_sport = LOWER(data INDEX 1)
+            amount = FLOAT(data[INDEX 2])
+
+            IF user_input == "all" OR user_input == current_sport DO
+                total = total + amount
+                OUTPUT "data[INDEX 1], data[INDEX 2], data[INDEX 5]"
+                found = TRUE
+        END IF
+    END LOOP
+    IF FOUND IS TRUE DO
+        OUTPUT "=" * width
+        OUTPUT "Total Income:" and total amount formatted as RM with 2 decimal places
+    ELSE
+        OUTPUT "No record found"
+    END IF 
+    INPUT "Press enter to return"
+END FUNCTION
+================================================Receptionist
+DEFINE FUNCTION receptionist(receptionist_id) 
+
+    WHILE True: 
+        OUTPUT "Receptionist Menu" and Options 1 to 9 
+        GET user_choice 
+
+        IF user_choice IS 1: CALL register_trainee() 
+
+        ELSE IF user_choice IS 2: CALL delete_trainee() 
+
+        ELSE IF user_choice IS 3: CALL update_program() 
+
+        ELSE IF user_choice IS 4: CALL payment() 
+
+        ELSE IF user_choice IS 5: CALL generate_receipt() 
+
+        ELSE IF user_choice IS 6: CALL view_request() 
+
+        ELSE IF user_choice IS 7: CALL update_profile(receptionist_id) 
+
+        ELSE IF user_choice IS 8:  
+            OUTPUT "Logging Out" 
+            EXIT loop 
+        ELSE IF user_choice IS 9: 
+            OUTPUT "Goodbye" 
+            TERMINATE program 
+        ELSE: 
+            OUTPUT "Invalid choice" 
+
+    END WHILE 
+END FUNCTION 
+
+ 
+
+DEFINE FUNCTION update_program() 
+    OPEN trainee_file AND schedule_file 
+    IF files not found: RETURN error 
+
+    OUTPUT header (ID, Name, Current Program) 
+    FOR each trainee in trainee_file: 
+        CHECK schedule_file for trainee's payment status 
+        IF status IS NOT "Paid": 
+
+            OUTPUT trainee details 
+     
+    GET target_id from user 
+    IF target_id is "q": RETURN 
+    GET new_sport from user 
+    CALL update_function(target_id, new_sport) 
+END FUNCTION 
+
+
+DEFINE FUNCTION update_function(target_id, new_sport) 
+
+    READ trainee_file, schedule_file, and coach_file 
+    FIND trainee by target_id 
+
+    IF NOT found: OUTPUT"Error" AND RETURN 
+
+    CHECK payment_status in schedule_file 
+    IF status IS "Paid": OUTPUT"Cannot update" AND RETURN 
+
+    UPDATE trainee's sport in trainee_list 
+    FIND first coach matching new_sport in coach_file 
+
+    IF coach NOT found: 
+        REMOVE trainee's entry from schedule_file 
+        OUTPUT"No coach found, schedule cancelled" 
+    ELSE: 
+        UPDATE schedule_entry with new coach_id, coach_name, and new_sport 
+        OUTPUT"Account and Schedule updated" 
+    SAVE all updated lists back to respective files 
+END FUNCTION 
+
+ 
+
+DEFINE FUNTION payment() 
+    GET current_date and current_time 
+    READ schedule_file 
+
+    OUTPUTall trainees where status is "Unpaid" 
+    LOOP: 
+
+        GET target_id from user 
+        IF target_id is "q": EXIT LOOP 
+        IF target_id exists in schedule AND status is "Unpaid": 
+            GET payment_method (Cash or Card) 
+            IF method is "Cash": 
+                GET amount_received 
+                CALCULATE change (amount_received - fee) 
+                OUTPUTchange 
+            ELSE IF method is "Card": 
+                GET card_pin 
+                OUTPUT"Transaction complete" 
+
+            SET status to "Paid" 
+            WRITE transaction to money_file 
+            SAVE updated schedule_file 
+            EXIT LOOP 
+        ELSE: 
+            OUTPUT"ID not found or already paid" 
+    END LOOP 
+END FUNCTION 
+
+ 
+
+DEFINE FUNCTION generate_receipt() 
+
+    TRY: 
+        OPEN trainee_schedule_file for READING 
+        READ all lines into a list called "lines" 
+    EXCEPT FileNotFoundError: 
+        OUTPUT "File not found error" 
+        RETURN 
+
+    SET current_time = GET_CURENT_TIMESTAMP() 
+    GENERATE receipt_code = FORMAT(current_time, "microseconds + seconds") 
+    OUTPUT Header: "Trainee ID | Program | Fee | Status" 
+    SET found_paid_trainee = False 
+
+    FOR each line in lines: 
+        SPLIT line by " | " into data_array 
+        IF data_array[8] EQUALS "Paid": 
+            OUTPUT data_array[3], data_array[1], data_array[4], data_array[8] 
+            SET found_paid_trainee = True 
+
+    IF found_paid_trainee IS False: 
+        OUTPUT "No trainees have paid yet." 
+        RETURN 
+
+    WHILE True: 
+        INPUT target_id (or 'q' to quit) 
+        IF target_id IS "q": BREAK loop 
+        # Auto-format ID to start with "TP" if user forgot 
+
+        IF target_id DOES NOT START WITH "TP": 
+            target_id = "TP" + target_id 
+
+        SET receipt_generated = False 
+        FOR each line in lines: 
+
+            SPLIT line into trainee_data 
+            IF trainee_data[3] EQUALS target_id AND trainee_data[8] EQUALS "Paid": 
+
+                # Persistence: Save to physical file 
+                OPEN receipt_log_file for APPENDING 
+                WRITE receipt_text to file 
+                CLOSE file 
+
+                OUTPUT receipt_text (on screen) 
+                SET receipt_generated = True 
+                BREAK inner_loop 
+
+        IF receipt_generated IS True: 
+            BREAK while_loop 
+        ELSE: 
+            OUTPUT "Error: ID not found or trainee has not paid." 
+
+    WAIT for user to press Enter 
+END FUNCTION 
+
+ 
+
+DEFINE FUNCTION view_request() 
+
+    TRY: 
+        OPEN request_file for READING 
+        READ all lines into "request_lines" 
+    EXCEPT FileNotFoundError: 
+        OUTPUT "No pending requests found." 
+        RETURN 
+
+    OUTPUT Header: "Trainee ID | New Sport | Old Sport | Status" 
+    SET found_pending = False 
+
+    FOR each line in request_lines: 
+        SPLIT line into request_data 
+        IF request_data[3] EQUALS "Pending": 
+            OUTPUT request_data 
+            SET found_pending = True 
+
+    IF found_pending IS False: 
+        OUTPUT "All requests have been processed." 
+        RETURN 
+    INPUT target_id 
+    INPUT decision ("a" for Approve, "r" for Reject) 
+
+    SET file_needs_update = False 
+
+    FOR index from 0 to LENGTH(request_lines) - 1: 
+        SPLIT request_lines[index] into change_data 
+
+        IF change_data[0] EQUALS target_id AND change_data[3] EQUALS "Pending": 
+            IF decision IS "a": 
+                SET change_data[3] = "Approved" 
+                SET new_sport = change_data[1] 
+
+                # SYNC LOGIC: Update the Trainee and Schedule files 
+                CALL update_function(target_id, new_sport) 
+
+            ELSE IF decision IS "r": 
+                SET change_data[3] = "Rejected" 
+
+
+            # Re-assemble the line for the file 
+            SET request_lines[index] = JOIN(change_data, " | ") 
+            SET file_needs_update = True 
+            BREAK loop 
+
+    IF file_needs_update IS True: 
+        OPEN request_file for WRITING 
+        WRITE all request_lines back to file 
+        CLOSE file 
+        OUTPUT "Request processed successfully." 
+    ELSE: 
+        OUTPUT "Invalid ID or no pending request found." 
+    WAIT for user to press Enter 
+END FUNCTION
+
+
+================================================================= Coach
+DEFINE FUNCTION coach(id_value) 
+    WHILE TRUE THEN  
+        CALL FUNCTION clear_screen()  
+        OUTPUT "\n---Welcome to Coach Menu--- 
+ 
+        FOR each item in coach_options WITH index starting from 1 DO 
+            OUTPUT "[" + index + "]. " + item 
+        END FOR LOOP 
+  
+        DEFINE VARIABLE user_input 
+        user_input = INPUT "Enter your choice (1-7): " 
+  
+        IF user_input == "1" THEN 
+            CALL FUNCTION add_program(id_value) 
+  
+        ELSE IF user_input == "2" THEN 
+            CALL FUNCTION update_training(id_value) 
+  
+        ELSE IF user_input == "3" THEN 
+            CALL FUNCTION delete_program(id_value) 
+  
+        ELSE IF user_input == "4" THEN 
+            CALL FUNCTION view_program(id_value) 
+  
+        ELSE IF user_input == "5" THEN  
+            CALL FUNCTION update_profile(file_path_coaches, id_value) 
+  
+        ELSE IF user_input == "6" THEN 
+            OUTPUT "Logging Out...." 
+            CALL FUNCTION clear_logout() 
+            RETURN // RETURN BACK FUNCTION login_page() 
+  
+        ELSE IF user_input == "7" THEN 
+            OUTPUT "Thank you for using Admin Sport-Training Centre Management System..Good Bye!" 
+            EXIT PROGRAM 
+        ELSE THEN 
+            CALL FUNCTION clear_screen() 
+            OUTPUT "Invalid Answer, please try again." 
+        END IF 
+    END WHILE LOOP 
+END FUNCTION 
+
+# COACH OPTION FUNTIONS 
+# add program 
+DEFINE FUNCTION add_program(id_value) 
+TRY DO  
+	OPEN coach_file, trainee_file, schedule_file in READ mode 
+EXCEPT FileNotFoundError DO 
+	OUTPUT "---No File Found---" 
+	RETURN 
+END TRY 
+ 
+SET coach_sport = NULL 
+FOR EACH line IN coach_lines DO 
+	SET data = SPLIT line BY " | " 
+	IF data[3] == id_value THEN SET coach_sport = data[9] 
+END FOR 
+ 
+IF coach_sport IS NULL THEN  
+	OUTPUT "Can't find your record" 
+	RETURN 
+END IF 
+OUTPUT "---Your Current Schedule---" 
+FOR EACH line IN schedule_lines DO 
+	SET data = SPLIT line BY " | " 
+	IF data[0] == id_value THEN OUTPUT data 
+END FOR 
+ 
+SET charge = CALL input_int("Charge: RM", 50, 300) 
+SET date = CALL input_date("Enter your date DD/MM/YYYY: ") 
+ 
+WHILE TRUE DO 
+	SET from_time = CALL input_time("Enter start time: ") 
+	SET to_time = CALL input_time("Enter end time: ") 
+	IF CALL time_conflict(from_time, to_time) IS TRUE THEN CONTINUE LOOP 
+ 
+	SET conflict = FALSE 
+	FOR EACH line IN schedule_lines DO 
+		SET data = SPLIT line BY " | " 
+		IF data[0] == id_value AND data[5] == date THEN 
+				IF from_time < data[7] AND to_time > data[6] THEN 
+					SET conflict = TRUE 
+				END IF 
+		END IF 
+	END FOR 
+ 
+	IF conflict IS TRUE THEN OUTPUT "Double booked!" ELSE BREAK LOOP 
+END WHILE 
+ 
+SET found = FALSE 
+FOR EACH line IN trainee_lines DO 
+	SET t_data = SPLIT line BY " | " 
+	SET trainee_id = t_data[3] 
+ 
+	SET is_assigned = FALSE 
+	FOR EACH s_line IN schedule_lines DO 
+		IF (SPLIT s_line BY " | ")[3] == trainee_id THEN SET is_assigned = TRUE 
+	END FOR 
+	IF is_assigned THEN CONTINUE LOOP 
+ 
+	IF ANY sport IN trainee_sports MATCHES coach_sports THEN 
+		SET found = TRUE, SET match_sport = sport 
+		BREAK FOR LOOP 
+	END IF 
+END FOR 
+ 
+IF found THEN 
+	APPEND to schedule_file: id_value, match_sport, trainee_name, trainee_id, charge, date, from_time, to_time, "Unpaid" 
+	OUTPUT "Program added successfully" 
+ELSE 
+	OUTPUT "Add Failed. No matching trainee found." 
+END IF 
+END FUNCTION 
+ 
+ 
+# update trainning 
+DEFINE FUNCTION update_training(id_value) 
+TRY DO  
+	OPEN schedule_file READ 
+EXCEPT THEN RETURN 
+ 
+FOR EACH line IN lines DO 
+	SET data = SPLIT line BY " | " 
+	IF data[0] == id_value AND data[8] == "Unpaid" THEN OUTPUT data 
+END FOR 
+ 
+SET target_tp = CALL input_id("Enter trainee TP: ") 
+ 
+FOR EACH line IN lines DO 
+	SET data = SPLIT line BY " | " 
+	IF data[0] == id_value AND data[3] == target_tp THEN 
+		IF data[8] != "Unpaid" THEN OUTPUT "Already paid, cannot edit"; RETURN 
+ 
+		data[4] = CALL input_int("New charge: ") 
+		data[5] = CALL input_date("New date: ") 
+		data[6] = CALL input_time("New start: ") 
+		data[7] = CALL input_time("New end: ") 
+ 
+		IF CALL time_conflict(data[6], data[7]) THEN RETURN 
+		REPLACE line IN file AND SAVE 
+		OUTPUT "Update Success" 
+		RETURN 
+	END IF 
+END FOR 
+END FUNCTION 
+ 
+# delete program 
+DEFINE FUNCTION delete_program(id_value) 
+OPEN schedule_file READ 
+OUTPUT all programs where data[0] == id_value 
+ 
+SET target = CALL input_id("Enter Trainee ID to delete: ") 
+SET new_lines = [] 
+ 
+FOR EACH line IN lines DO 
+	SET data = SPLIT line BY " | " 
+	IF data[0] == id_value AND data[3] == target THEN 
+		CONTINUE LOOP 
+	ELSE 
+		ADD line TO new_lines 
+	END IF 
+END FOR 
+WRITE new_lines TO schedule_file 
+ 
+# view program 
+DEFINE FUNCTION view_program(id_value) 
+TRY DO 
+	OPEN schedule_file READ 
+	OUTPUT "--- PROGRAM LIST ---" 
+	FOR EACH line IN lines DO 
+		SET data = SPLIT line BY " | " 
+		IF data[0] == id_value THEN 
+				OUTPUT data[1], data[3], data[2], data[4], data[5], data[6], data[7] 
+		END IF 
+	END FOR 
+EXCEPT THEN OUTPUT "No File Found" 
+END FUNCTION 
+
+=================================================================Trainee
+#Trainee menu
+FUNCTION trainee(trainee_id)
+
+    WHILE TRUE
+
+        DISPLAY "---- Trainee Menu ----"
+        DISPLAY "1. View Schedule"
+        DISPLAY "2. View Payment"
+        DISPLAY "3. Request Change Training Program"
+        DISPLAY "4. Update Profile"
+        DISPLAY "5. Log Out"
+        DISPLAY "6. Quit"
+
+        INPUT user_choice
+
+        IF user_choice = 1 THEN
+            CALL view_schedule(trainee_id)
+
+        ELSE IF user_choice = 2 THEN
+            CALL view_payment(trainee_id)
+
+        ELSE IF user_choice = 3 THEN
+            CALL request_change_program(trainee_id)
+
+        ELSE IF user_choice = 4 THEN
+            CALL update_profile(file_path_trainee, trainee_id)
+
+        ELSE IF user_choice = 5 THEN
+            DISPLAY "Logging Out..."
+            RETURN to login_page
+
+        ELSE IF user_choice = 6 THEN
+            DISPLAY "Thank you for using BSTC system"
+            TERMINATE program
+
+        ELSE
+            DISPLAY "Invalid choice. Please try again"
+
+    END WHILE
+
+END FUNCTION
+
+#View schedule
+FUNCTION view_schedule(trainee_id)
+
+    OPEN trainee_schedule_file IN READ MODE
+
+    DISPLAY "---- Your Training Schedule ----"
+
+    FOR EACH line IN trainee_schedule_file
+
+        SPLIT line BY "|" INTO data
+
+        IF data[3] = trainee_id THEN
+
+            DISPLAY "Coach ID: ", data[0]
+            DISPLAY "Sport Program: ", data[1]
+            DISPLAY "Coach Name: ", data[2]
+            DISPLAY "Training Date: ", data[5]
+            DISPLAY "Start Time: ", data[6]
+            DISPLAY "End Time: ", data[7]
+            DISPLAY "Payment Status: ", data[8]
+
+            DISPLAY "-----------------------------"
+
+        END IF
+
+    END FOR
+
+    CLOSE FILE
+
+    INPUT "Press Enter to return"
+
+END FUNCTION
+
+#View Payment
+FUNCTION view_payment(trainee_id)
+
+    OPEN trainee_schedule_file IN READ MODE
+
+    DISPLAY "---- Payment Information ----"
+
+    FOR EACH line IN trainee_schedule_file
+
+        SPLIT line BY "|" INTO data
+
+        IF data[3] = trainee_id THEN
+
+            DISPLAY "Program: ", data[1]
+            DISPLAY "Charge: RM", data[4]
+            DISPLAY "Date: ", data[5]
+            DISPLAY "Payment Status: ", data[8]
+
+            DISPLAY "-----------------------"
+
+        END IF
+
+    END FOR
+
+    CLOSE FILE
+
+    INPUT "Press Enter to return"
+
+END FUNCTION
+
+#Request request_change_program
+FUNCTION request_change_program(trainee_id)
+
+    DISPLAY "---- Request Change Training Program ----"
+
+    INPUT new_sport
+
+    CREATE request_status = "Pending"
+
+    OPEN request_file IN APPEND MODE
+
+    WRITE trainee_id | new_sport | request_status
+
+    CLOSE FILE
+
+    DISPLAY "Request sent successfully"
+    DISPLAY "Please wait for receptionist approval"
+
+    INPUT "Press Enter to return"
+
+END FUNCTION
+
+#Update profile
+FUNCTION update_profile(file_path, trainee_id)
+
+    DISPLAY "---- Update Profile ----"
+
+    DISPLAY "1. Change Username"
+    DISPLAY "2. Change Password"
+    DISPLAY "3. Change Email"
+    DISPLAY "4. Change Age"
+    DISPLAY "5. Change Contact Number"
+    DISPLAY "6. Change IC / Passport"
+    DISPLAY "7. Change Nationality"
+    DISPLAY "8. Change Language"
+    DISPLAY "9. Back"
+
+    INPUT choice
+
+    FIND trainee record using trainee_id
+
+    IF choice = 1 THEN
+        INPUT new_username
+        UPDATE username
+
+    ELSE IF choice = 2 THEN
+        INPUT new_password
+        UPDATE password
+
+    ELSE IF choice = 3 THEN
+        INPUT new_email
+        UPDATE email
+
+    ELSE IF choice = 4 THEN
+        INPUT new_age
+        UPDATE age
+
+    ELSE IF choice = 5 THEN
+        INPUT new_contact
+        UPDATE contact number
+
+    ELSE IF choice = 6 THEN
+        INPUT new_ic
+        UPDATE IC or passport
+
+    ELSE IF choice = 7 THEN
+        INPUT new_nationality
+        UPDATE nationality
+
+    ELSE IF choice = 8 THEN
+        INPUT new_language
+        UPDATE language
+
+    ELSE IF choice = 9 THEN
+        RETURN to trainee menu
+
+    SAVE updated data to file
+
+    DISPLAY "Profile updated successfully"
+
+END FUNCTION
+
+#Trainee request
+FUNCTION send_request(trainee_id)
+
+    DISPLAY "Enter the sport you want to change to:"
+    INPUT requested_sport
+
+    SET status = "Pending"
+
+    OPEN request_file IN APPEND MODE
+
+    WRITE trainee_id | requested_sport | status INTO request_file
+
+    CLOSE request_file
+
+    DISPLAY "Your request has been sent successfully."
+    DISPLAY "Please wait for receptionist approval."
+
+END FUNCTION
+=================================================== Start System
+IF __name__ == "__main__" 
+    CALL FUNCTION main_menu() #START SYSTEM

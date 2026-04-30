@@ -1,0 +1,5 @@
+ivan | 0926421038 | daidj@gmail.com | TP12210706 | 20 | +6012345678 | 8391830193 | Malaysia | chinese | swimming
+ng | 12345678 | djadj@gmail.com | TP12212256 | 20 | +6012345678 | 31010931 | Malaysia | chinese | swimming
+spalap | 139103910 | djadj@gmail.com | TP83282919 | 20 | +6012345678 | 31010931 | Malaysia | chinese | badminton
+ivan | 139103910 | djadj@gmail.com | TP4242424 | 20 | +6012345678 | 31010931 | Malaysia | chinese | badminton
+la | 12345678 | em@gmail.com | TP14235509 | 19 | +6012345678 | 123456789 | Malaysia | chinese | volleyball
